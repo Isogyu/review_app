@@ -1,9 +1,9 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import AiAdvice from './AiAdvice.tsx'
 import ReviewForm from './ReviewForm.tsx'
 import Stats from './Stats.tsx'
-import { deleteReview, loadReviews, saveReviews } from './storage.ts'
+import { deleteReview, exportToJson, importFromJson, loadReviews, saveReviews } from './storage.ts'
 import { REVIEW_QUESTIONS, type Review } from './types.ts'
 
 type Tab = 'input' | 'history' | 'stats' | 'ai'
@@ -16,6 +16,7 @@ function App() {
   const [tab, setTab] = useState<Tab>('input')
   const [reviews, setReviews] = useState<Review[]>(() => loadReviews())
   const [editing, setEditing] = useState<Review | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const refresh = () => {
     setReviews(loadReviews())
@@ -46,6 +47,30 @@ function App() {
     refresh()
     if (editing) {
       setEditing(null)
+    }
+  }
+
+  const handleExport = () => {
+    const blob = new Blob([exportToJson()], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `review_app_backup_${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      importFromJson(text)
+      refresh()
+    } catch (err) {
+      alert('インポートに失敗しました: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -96,15 +121,38 @@ function App() {
 
       {tab === 'history' && (
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-slate-800">履歴</h2>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-            >
-              すべて削除
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                エクスポート
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                インポート
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                onChange={handleImport}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={handleClear}
+                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+              >
+                すべて削除
+              </button>
+            </div>
           </div>
           {reviews.length === 0 ? (
             <p className="text-slate-500">まだ記録がありません。</p>

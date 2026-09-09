@@ -1,32 +1,44 @@
-# React + TypeScript + Vite
+# 振り返りアプリ（review_app）
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+毎日の振り返りを KPT / YWT の2形式で記録し、可視化・AI分析できる Web アプリです。
 
-Currently, two official plugins are available:
+## 機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **振り返り入力**：KPT または YWT を選択して、日付ごとに回答を入力
+- **履歴管理**：一覧表示・編集・削除、JSON 形式のエクスポート/インポート
+- **可視化**：記録数、連続日数、週次記録数の棒グラフ、35日ヒートマップ
+- **AI分析**：OpenAI 互換 API を使って振り返り履歴から傾向とアドバイスを生成
 
-## React Compiler
+## 技術スタック
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS v4
+- date-fns
+- recharts
+- lucide-react
 
-## Expanding the Oxlint configuration
+## 起動手順
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+ブラウザで http://localhost:5173/ を開きます。
+
+## ビルド
+
+```bash
+npm run build
+npm run lint
+```
+
+## AI分析の API キー設定
+
+「AI分析」タブで OpenAI 互換 API のベースURL、モデル名、API キーを入力してください。API キーはブラウザ内の localStorage に保存され、コードやリポジトリには含まれません。
+
+## データ保存
+
+すべての振り返りデータはブラウザの localStorage に保存されます。データのバックアップには履歴画面の「エクスポート」機能を利用してください。

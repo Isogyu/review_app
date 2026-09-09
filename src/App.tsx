@@ -1,9 +1,127 @@
+import { useState } from 'react'
+import ReviewForm from './ReviewForm.tsx'
+import { deleteReview, loadReviews, saveReviews } from './storage.ts'
+import { REVIEW_QUESTIONS, type Review } from './types.ts'
+
+type Tab = 'input' | 'history'
+
+function formatDate(date: string) {
+  return date.replace(/-/g, '/')
+}
+
 function App() {
+  const [tab, setTab] = useState<Tab>('input')
+  const [reviews, setReviews] = useState<Review[]>(() => loadReviews())
+
+  const refresh = () => {
+    setReviews(loadReviews())
+  }
+
+  const handleDelete = (id: string) => {
+    deleteReview(id)
+    refresh()
+  }
+
+  const handleClear = () => {
+    if (confirm('すべての履歴を削除します。よろしいですか？')) {
+      saveReviews([])
+      refresh()
+    }
+  }
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-800">振り返りアプリ</h1>
-      <p className="mt-2 text-slate-600">これから実装します。</p>
-    </main>
+    <div className="mx-auto max-w-3xl px-4 py-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold text-slate-800">振り返りアプリ</h1>
+        <p className="text-slate-500">KPT / YWT で毎日を振り返る</p>
+      </header>
+
+      <nav className="mb-6 flex gap-2 border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => setTab('input')}
+          className={`border-b-2 px-4 py-2 text-sm font-medium ${
+            tab === 'input'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          入力
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('history')}
+          className={`border-b-2 px-4 py-2 text-sm font-medium ${
+            tab === 'history'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          履歴
+        </button>
+      </nav>
+
+      {tab === 'input' && (
+        <ReviewForm onSaved={refresh} />
+      )}
+
+      {tab === 'history' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-800">履歴</h2>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            >
+              すべて削除
+            </button>
+          </div>
+          {reviews.length === 0 ? (
+            <p className="text-slate-500">まだ記録がありません。</p>
+          ) : (
+            <ul className="space-y-4">
+              {reviews
+                .slice()
+                .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+                .map((review) => (
+                  <li
+                    key={review.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-4"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-slate-700">
+                        {formatDate(review.date)} / {review.type}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(review.id)}
+                        className="text-sm text-red-600 hover:underline"
+                      >
+                        削除
+                      </button>
+                    </div>
+                    <dl className="space-y-2">
+                      {REVIEW_QUESTIONS[review.type].map((q) => (
+                        review.answers[q.key] && (
+                          <div key={q.key}>
+                            <dt className="text-xs font-medium text-slate-500">
+                              {q.label}
+                            </dt>
+                            <dd className="whitespace-pre-wrap text-sm text-slate-800">
+                              {review.answers[q.key]}
+                            </dd>
+                          </div>
+                        )
+                      ))}
+                    </dl>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
   )
 }
 

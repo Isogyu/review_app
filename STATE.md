@@ -1,28 +1,34 @@
 現在のタスク:
-Loop 1: 設計・技術選定
+Loop 2: 振り返り入力のコア機能
 
 完了:
 - リポジトリ https://github.com/Isogyu/review_app.git を作業ディレクトリへ clone
 - 技術スタックの選定
-  - フレームワーク: React 19 + TypeScript（型安全・保守性）
-  - ビルドツール: Vite 8（高速な開発・本番ビルド）
-  - スタイリング: Tailwind CSS v4（ユーティリティクラスでレスポンシブ対応）
-  - グラフ: recharts（React ネイティブで週次推移等を実装）
+  - フレームワーク: React 19 + TypeScript
+  - ビルドツール: Vite 8
+  - スタイリング: Tailwind CSS v4
+  - グラフ: recharts
   - 日付処理: date-fns
-  - アイコン: lucide-react
-  - 保存: IndexedDB（dexie.js 導入予定）または localStorage。IndexedDBを採用予定
-- 雛形のビルド・lint確認（`npm run build`、`npm run lint` 成功）
-- STATE.md の作成
+  - 保存: localStorage（IndexedDBは不要と判断）
+- 雛形のビルド・lint確認
+- `STATE.md` の作成
+- KPT / YWT 入力フォームの実装
+- 回答内容を localStorage に保存する機能
+- 履歴の一覧・削除（Loop 3 と一部重複するが表示確認用に仮実装）
 
 未完了:
-- 各機能の実装（Loop 2 以降）
+- Loop 3: 詳細な履歴・編集機能
+- Loop 4: デザイン整備・レスポンシブ最終調整
+- Loop 5: 可視化機能
+- Loop 6: AI分析機能
+- Loop 7: 仕上げ・README
 
 前回の失敗と原因:
-- なし
+- `useEffect` 内で `setState` を同期的に呼び出していたため lint 警告が出た。
+  - `useState` の初期化関数で localStorage を読み込む形に修正。
 
 次回:
-Loop 2: 振り返り入力（KPT/YWT）のコア機能を実装する
+Loop 3: 履歴一覧・編集・削除機能の完成
 
 備考:
-- AI APIキー管理方式は Loop 6 で決定。当面は未実装。
-- ブランチ戦略: 各Loopで feature/loopN ブランチを切り、PR経由でマージ。
+- AI APIキー管理方式は Loop 6 で決定。

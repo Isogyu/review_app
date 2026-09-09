@@ -1,10 +1,11 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import ReviewForm from './ReviewForm.tsx'
+import Stats from './Stats.tsx'
 import { deleteReview, loadReviews, saveReviews } from './storage.ts'
 import { REVIEW_QUESTIONS, type Review } from './types.ts'
 
-type Tab = 'input' | 'history'
+type Tab = 'input' | 'history' | 'stats'
 
 function formatDate(date: string) {
   return date.replace(/-/g, '/')
@@ -47,6 +48,12 @@ function App() {
     }
   }
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'input', label: '入力' },
+    { key: 'history', label: '履歴' },
+    { key: 'stats', label: '統計' },
+  ]
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <header className="mb-6">
@@ -55,31 +62,25 @@ function App() {
       </header>
 
       <nav className="mb-6 flex gap-2 border-b border-slate-200">
-        <button
-          type="button"
-          onClick={() => {
-            setTab('input')
-            if (!editing) setEditing(null)
-          }}
-          className={`border-b-2 px-4 py-2 text-sm font-medium ${
-            tab === 'input'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          入力
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('history')}
-          className={`border-b-2 px-4 py-2 text-sm font-medium ${
-            tab === 'history'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          履歴
-        </button>
+        {tabs.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setTab(key)
+              if (key === 'input' && !editing) {
+                setEditing(null)
+              }
+            }}
+            className={`border-b-2 px-4 py-2 text-sm font-medium ${
+              tab === key
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </nav>
 
       {tab === 'input' && (
@@ -160,6 +161,8 @@ function App() {
           )}
         </section>
       )}
+
+      {tab === 'stats' && <Stats reviews={reviews} />}
     </div>
   )
 }

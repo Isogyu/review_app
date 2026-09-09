@@ -1,28 +1,25 @@
 現在のタスク:
-Loop 1: 設計・技術選定
+Loop 6: AI分析機能
 
 完了:
-- リポジトリ https://github.com/Isogyu/review_app.git を作業ディレクトリへ clone
-- 技術スタックの選定
-  - フレームワーク: React 19 + TypeScript（型安全・保守性）
-  - ビルドツール: Vite 8（高速な開発・本番ビルド）
-  - スタイリング: Tailwind CSS v4（ユーティリティクラスでレスポンシブ対応）
-  - グラフ: recharts（React ネイティブで週次推移等を実装）
-  - 日付処理: date-fns
-  - アイコン: lucide-react
-  - 保存: IndexedDB（dexie.js 導入予定）または localStorage。IndexedDBを採用予定
-- 雛形のビルド・lint確認（`npm run build`、`npm run lint` 成功）
-- STATE.md の作成
+- 技術選定・雛形構築
+- KPT / YWT 入力・保存
+- 履歴一覧・編集・削除
+- デザイン整備・レスポンシブ
+- 可視化（統計）
+- AI分析タブ
+  - OpenAI互換 API のベースURL・モデル・APIキーをブラウザ内 localStorage で管理
+  - APIキーはコード/コミットに含めず、ユーザー入力方式
+  - 履歴を要約して `chat/completions` を呼び出し、アドバイスを表示
 
 未完了:
-- 各機能の実装（Loop 2 以降）
+- Loop 7: 仕上げ・README
 
 前回の失敗と原因:
 - なし
 
 次回:
-Loop 2: 振り返り入力（KPT/YWT）のコア機能を実装する
+Loop 7: 仕上げ・README・最終確認
 
 備考:
-- AI APIキー管理方式は Loop 6 で決定。当面は未実装。
-- ブランチ戦略: 各Loopで feature/loopN ブランチを切り、PR経由でマージ。
+- AI APIキー管理方式: ブラウザ内ユーザー入力方式。人間承認済み。

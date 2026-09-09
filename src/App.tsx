@@ -1,11 +1,12 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import AiAdvice from './AiAdvice.tsx'
 import ReviewForm from './ReviewForm.tsx'
 import Stats from './Stats.tsx'
 import { deleteReview, loadReviews, saveReviews } from './storage.ts'
 import { REVIEW_QUESTIONS, type Review } from './types.ts'
 
-type Tab = 'input' | 'history' | 'stats'
+type Tab = 'input' | 'history' | 'stats' | 'ai'
 
 function formatDate(date: string) {
   return date.replace(/-/g, '/')
@@ -52,6 +53,7 @@ function App() {
     { key: 'input', label: '入力' },
     { key: 'history', label: '履歴' },
     { key: 'stats', label: '統計' },
+    { key: 'ai', label: 'AI分析' },
   ]
 
   return (
@@ -163,6 +165,7 @@ function App() {
       )}
 
       {tab === 'stats' && <Stats reviews={reviews} />}
+      {tab === 'ai' && <AiAdvice reviews={reviews} />}
     </div>
   )
 }

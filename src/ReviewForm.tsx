@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { useMemo, useState } from 'react'
+import { saveReview } from './storage.ts'
 import { REVIEW_QUESTIONS, REVIEW_TYPES, type Review, type ReviewType } from './types.ts'
 
 function generateId() {
@@ -8,12 +9,14 @@ function generateId() {
 
 type Props = {
   onSaved: () => void
+  editing?: Review | null
+  onCancelEdit?: () => void
 }
 
-export default function ReviewForm({ onSaved }: Props) {
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [type, setType] = useState<ReviewType>('KPT')
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+export default function ReviewForm({ onSaved, editing, onCancelEdit }: Props) {
+  const [date, setDate] = useState(editing?.date ?? format(new Date(), 'yyyy-MM-dd'))
+  const [type, setType] = useState<ReviewType>(editing?.type ?? 'KPT')
+  const [answers, setAnswers] = useState<Record<string, string>>(editing?.answers ?? {})
   const [saved, setSaved] = useState(false)
 
   const questions = useMemo(() => REVIEW_QUESTIONS[type], [type])
@@ -26,21 +29,22 @@ export default function ReviewForm({ onSaved }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const review: Review = {
-      id: generateId(),
+      id: editing ? editing.id : generateId(),
       date,
       type,
       answers,
-      createdAt: Date.now(),
+      createdAt: editing ? editing.createdAt : Date.now(),
       updatedAt: Date.now(),
     }
-    const reviews = JSON.parse(localStorage.getItem('review_app_reviews') ?? '[]') as Review[]
-    reviews.push(review)
-    localStorage.setItem('review_app_reviews', JSON.stringify(reviews))
+    saveReview(review)
     setAnswers({})
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
     onSaved()
+    onCancelEdit?.()
   }
+
+  const isEditing = Boolean(editing)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
@@ -58,8 +62,9 @@ export default function ReviewForm({ onSaved }: Props) {
           振り返り形式
           <select
             value={type}
+            disabled={isEditing}
             onChange={(e) => handleTypeChange(e.target.value as ReviewType)}
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
             {REVIEW_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -89,8 +94,17 @@ export default function ReviewForm({ onSaved }: Props) {
           type="submit"
           className="rounded-lg bg-indigo-600 px-5 py-2.5 text-white shadow-sm hover:bg-indigo-700"
         >
-          保存する
+          {isEditing ? '更新する' : '保存する'}
         </button>
+        {isEditing && onCancelEdit && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="rounded-lg border border-slate-300 px-5 py-2.5 text-slate-700 hover:bg-slate-50"
+          >
+            キャンセル
+          </button>
+        )}
         {saved && <span className="text-sm text-emerald-600">保存しました</span>}
       </div>
     </form>

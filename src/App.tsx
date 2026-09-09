@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import ReviewForm from './ReviewForm.tsx'
 import { deleteReview, loadReviews, saveReviews } from './storage.ts'
@@ -118,20 +119,24 @@ function App() {
                       <span className="text-sm font-semibold text-slate-700">
                         {formatDate(review.date)} / {review.type}
                       </span>
-                      <div className="flex gap-3">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() => handleEdit(review)}
-                          className="text-sm text-indigo-600 hover:underline"
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-indigo-600 hover:bg-indigo-50"
+                          aria-label="編集"
                         >
-                          編集
+                          <Pencil size={16} />
+                          <span className="hidden sm:inline">編集</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(review.id)}
-                          className="text-sm text-red-600 hover:underline"
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                          aria-label="削除"
                         >
-                          削除
+                          <Trash2 size={16} />
+                          <span className="hidden sm:inline">削除</span>
                         </button>
                       </div>
                     </div>

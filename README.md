@@ -1,32 +1,271 @@
-# React + TypeScript + Vite
+# 振り返りアプリ（review_app）
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+毎日の振り返りを **KPT / YWT** の2形式で記録し、履歴管理・可視化・AI分析を行う Web アプリケーションです。個人利用を想定し、ブラウザ内（localStorage）にデータを保存します。
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 1. プロジェクトの目的
 
-## React Compiler
+- ユーザーが毎日、質問に答えるだけで簡単に1日を振り返れるようにする
+- 記録の蓄積を可視化して、継続の実感を得られるようにする
+- 一定期間の記録を AI に分析してもらい、傾向とアドバイスを受け取れるようにする
+- ログイン不要、サーバー不要、シンプル・ミニマルな運用を実現する
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 2. 設計思想
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### 2.1 最小限・ブラウザ完結
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+- 個人利用なので認証・ログイン機能は不要
+- データはサーバーではなくブラウザの **localStorage** に保持
+- インターネットへのデプロイが不要なので、セットアップは `npm install && npm run dev` だけ
+
+### 2.2 レスポンシブ・可読性優先
+
+- PC・スマホ両方のブラウザで快適に使える UI を目指す
+- Tailwind CSS v4 のユーティリティクラスを使い、最小限の CSS で柔軟に対応
+- 文字入力と振り返り内容の可読性を最優先
+
+### 2.3 入力体験をシンプルに
+
+- KPT / YWT をタブやセレクトで切り替え
+- 各項目は質問文を提示し、テキストエリアに自由に記述するだけ
+- 日付を選べば過去の振り返りも後から入力・編集可能
+
+### 2.4 外部 API キーの安全な扱い
+
+- AI分析は OpenAI 互換 API を呼び出す
+- API キーは **ブラウザ内（localStorage）にユーザーが入力して保持** し、コードやコミットには含めない
+- API キーがリポジトリに流出しない設計
+
+---
+
+## 3. 採用技術と選定理由
+
+| 技術 | 役割 | 選定理由 |
+|---|---|---|
+| React 19 | UI 構築 | コンポーネントベースで状態管理がシンプル |
+| TypeScript | 型安全 | 保守性向上、IDE 補完、ミスの早期発見 |
+| Vite 8 | ビルド・開発 | 高速な dev server と本番ビルド |
+| Tailwind CSS v4 | スタイリング | ユーティリティファーストでレスポンシブ対応が容易 |
+| recharts | グラフ描画 | React ネイティブで宣言的にグラフを記述 |
+| date-fns | 日付処理 | 軽量・関数型で使いやすい |
+| lucide-react | アイコン | 軽量な SVG アイコン |
+| localStorage | データ永続化 | サーバー不要、セットアップ不要 |
+
+### なぜ IndexedDB を使わなかったか
+
+当初は IndexedDB も候補でしたが、保存するデータは JSON 配列で十分扱え、コード量と依存を減らすため **localStorage** を採用しました。将来的に画像や大量データを扱うようになれば IndexedDB への移行を検討します。
+
+---
+
+## 4. ディレクトリ構成と主なファイル
+
+```
+├── index.html          # エントリーポイント（viewport, 日本語設定）
+├── package.json        # 依存・スクリプト
+├── vite.config.ts      # Vite + Tailwind CSS v4 プラグイン設定
+├── src/
+│   ├── main.tsx        # React アプリのマウント
+│   ├── App.tsx         # タブナビゲーションと全体レイアウト
+│   ├── ReviewForm.tsx  # KPT/YWT 入力フォーム（新規・編集対応）
+│   ├── Stats.tsx       # 統計カード・棒グラフ・35日ヒートマップ
+│   ├── AiAdvice.tsx    # AI分析設定画面と結果表示
+│   ├── ai.ts           # OpenAI互換 API 呼び出し + 設定の永続化
+│   ├── storage.ts      # localStorage への読み書き・エクスポート/インポート
+│   └── types.ts        # 型定義（Review, ReviewType など）
+├── STATE.md            # 開発状態管理（現在のタスク、完了・未完了など）
+└── README.md           # このファイル
+```
+
+---
+
+## 5. 機能の流れ
+
+### 5.1 振り返り入力（Loop 2）
+
+1. 日付を選択
+2. KPT / YWT の形式を選択
+3. 質問文に沿ってテキストを入力
+4. 「保存する」で localStorage に保存
+5. 同一日付・同一形式であっても新規作成可能。1日1件を基本とするが、後から追加もできる
+
+### 5.2 履歴管理（Loop 3 / Loop 7）
+
+- 日付が新しい順に一覧表示
+- 「編集」を押すと入力タブに該当データが読み込まれる
+- 「削除」で個別削除、または「すべて削除」で全消去
+- 「エクスポート」で JSON ファイルに保存
+- 「インポート」で JSON ファイルから復元
+
+### 5.3 可視化（Loop 5）
+
+- **記録数 / 連続日数 / 週平均** をカード表示
+- **週次記録数の棒グラフ**：直近8週間を可視化
+- **35日ヒートマップ**：日々の記録件数を色の濃さで表現
+
+### 5.4 AI分析（Loop 6）
+
+1. 「AI分析」タブで OpenAI 互換 API のベースURL、モデル、API キーを入力
+2. 設定はブラウザの localStorage に保存（コードには含まれない）
+3. 「分析してアドバイスを得る」を押すと、蓄積した振り返りを要約し `/chat/completions` を呼び出す
+4. AI からの応答を画面に表示
+
+#### AI プロンプトの設計
+
+- システムプロンプト：ユーザーの振り返りをもとに前向きなフィードバックと次に取り組むべきアドバイスを簡潔に日本語で提供
+- ユーザープロンプト：蓄積された振り返り全文を連結して送信
+
+#### CORS について
+
+ブラウザから直接外部 API を呼び出すため、利用する API サービスが **CORS（Cross-Origin Resource Sharing）** に対応している必要があります。OpenAI 公式 API は CORS 制限があるため、OpenRouter や自作プロキシなど、ブラウザから呼び出し可能なエンドポイントを使うことを推奨します。
+
+---
+
+## 6. データ設計
+
+```ts
+type Review = {
+  id: string        // ユニーク ID
+  date: string      // YYYY-MM-DD
+  type: 'KPT' | 'YWT'
+  answers: Record<string, string>
+  createdAt: number // タイムスタンプ
+  updatedAt: number // タイムスタンプ
 }
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- `answers` は形式に応じたキー（KPT なら `keep`/`problem`/`try`）を保持
+- 表示時に `types.ts` の `REVIEW_QUESTIONS` から質問文を引く
+
+---
+
+## 7. ループエンジニアリングによる AI 駆動開発
+
+本プロジェクトは、指示された仕様を「1回作って終わり」にするのではなく、**ループエンジニアリング（Loop Engineering）** の考え方で進めました。
+
+### 7.1 ループのサイクル
+
+1つの機能を **Goal → Action → Verify → 成功判定 → (失敗なら) 修正・再実行 → 成功したら停止** という機械的な検証ループで完成させます。
+
+```
+Goal（目標）
+  ↓
+Action（実装）
+  ↓
+Verify（検証）
+  ↓
+成功判定
+  ├─ 失敗 → 原因分析 → 修正 → 再実行
+  └─ 成功 → 停止・次へ
+```
+
+各ループで以下の共通ルールを守りました。
+
+| 項目 | 内容 |
+|---|---|
+| **Context** | プロンプト全文、リポジトリ内の既存コード、直前のコミット履歴、STATE.md |
+| **Goal** | ループごとに1つの機能単位を明確に設定 |
+| **Action** | コードの読み書き、依存追加、ビルド・リント実行、Git 操作 |
+| **Verify** | `npm run build`、`npm run lint` の成功、主要 UI フローの動作確認 |
+| **Retry** | 同一エラーへの修正は最大5回まで。それ以上は Human Gate へ |
+| **Stop Condition** | 検証を満たした時点で停止し、PR を作成 |
+| **State** | `STATE.md` に「現在のタスク」「完了」「未完了」「前回の失敗と原因」「次回」を記録 |
+| **Isolation** | 各ループで `feature/loopN` ブランチを分け、混在させない |
+| **Human Gate** | `main` へのマージ、AI API キー管理の最終決定、最終成果物の完了判断は人間の承認を経る |
+
+### 7.2 実践した7つのループ
+
+各ループで1つの機能単位を扱い、ブランチを分けて以下を繰り返しました。
+
+| ループ | ゴール | 主な成果 |
+|---|---|---|
+| Loop 1 | 設計・技術選定 | Vite + React + TS + Tailwind + recharts の雛形 |
+| Loop 2 | 振り返り入力 | KPT/YWT 入力、localStorage 保存 |
+| Loop 3 | 履歴・編集・削除 | 一覧、編集、削除機能 |
+| Loop 4 | デザイン整備 | レスポンシブ、アイコン付きボタン |
+| Loop 5 | 可視化 | 統計カード、棒グラフ、ヒートマップ |
+| Loop 6 | AI分析 | OpenAI互換 API 連携、ブラウザ内 API キー管理 |
+| Loop 7 | 仕上げ | エクスポート/インポート、README 整備 |
+
+### 7.3 状態管理
+
+- 各ループの状態は `STATE.md` に「現在のタスク」「完了」「未完了」「前回の失敗と原因」「次回」を記録
+- 失敗があればその場で原因分析と修正を行い、5回超える場合は Human Gate へ
+
+### 7.4 ブランチ戦略
+
+- 各ループで `feature/loopN` ブランチを作成
+- `main` ブランチへの直接 push/マージは禁止
+- 各ループ完了時に PR を作成（Human Gate：人間のマージ承認）
+
+### 7.5 検証
+
+- 各ループの完了条件として `npm run build` と `npm run lint` を実行
+- ビルドまたは lint でエラーが出た場合は修正を繰り返し、0 エラーになるまで進まない
+- 重要な UI フロー（入力 → 保存 → 一覧表示）は手動で確認
+
+### 7.6 大きな判断
+
+- **技術選定**：保守性とセットアップの容易さから React + TypeScript + Vite を採用
+- **データ保存**：サーバー不要で実装をシンプルにするため localStorage を採用
+- **グラフ**：React と相性の良い recharts を採用
+- **AI API キー管理**：セキュリティと運用コストを考慮し、ユーザーがブラウザに入力して保持する方式を採用
+
+---
+
+## 8. セットアップ手順
+
+```bash
+# 1. リポジトリを clone
+git clone https://github.com/Isogyu/review_app.git
+cd review_app
+
+# 2. 依存をインストール
+npm install
+
+# 3. 開発サーバーを起動
+npm run dev
+```
+
+ブラウザで http://localhost:5173/ を開きます。
+
+## 9. ビルド・品質確認
+
+```bash
+# 型チェック + 本番ビルド
+npm run build
+
+# リント
+npm run lint
+
+# 本番ビルドのプレビュー
+npm run preview
+```
+
+---
+
+## 10. AI分析の API キー設定
+
+1. アプリの「AI分析」タブを開く
+2. 使用する API の **ベースURL**、**モデル名**、**APIキー** を入力
+3. 「分析してアドバイスを得る」を押す
+
+API キーはブラウザの localStorage に保存されます。コードや Git には含まれません。
+
+---
+
+## 11. 今後の拡張案
+
+- PWA 対応（オフラインで使えるようにする）
+- 画像・音声の添付
+- IndexedDB への移行（大容量データ対応）
+- AI 分析の定期実行と通知
+- テーマ切り替え（ダークモード）
+
+---
+
+## 12. ライセンス
+
+本プロジェクトは個人利用を想定しています。ライセンス条項は別途定めます。

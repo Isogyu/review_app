@@ -33,3 +33,15 @@ export function deleteReview(id: string): void {
   const reviews = loadReviews().filter((r) => r.id !== id)
   saveReviews(reviews)
 }
+
+export function exportToJson(): string {
+  return JSON.stringify(loadReviews(), null, 2)
+}
+
+export function importFromJson(json: string): Review[] {
+  const parsed = JSON.parse(json) as unknown
+  if (!Array.isArray(parsed)) throw new Error('JSONが配列ではありません')
+  const reviews = parsed as Review[]
+  saveReviews(reviews)
+  return reviews
+}

@@ -12,6 +12,7 @@ function formatDate(date: string) {
 function App() {
   const [tab, setTab] = useState<Tab>('input')
   const [reviews, setReviews] = useState<Review[]>(() => loadReviews())
+  const [editing, setEditing] = useState<Review | null>(null)
 
   const refresh = () => {
     setReviews(loadReviews())
@@ -29,6 +30,22 @@ function App() {
     }
   }
 
+  const handleEdit = (review: Review) => {
+    setEditing(review)
+    setTab('input')
+  }
+
+  const handleCancelEdit = () => {
+    setEditing(null)
+  }
+
+  const handleSaved = () => {
+    refresh()
+    if (editing) {
+      setEditing(null)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <header className="mb-6">
@@ -39,7 +56,10 @@ function App() {
       <nav className="mb-6 flex gap-2 border-b border-slate-200">
         <button
           type="button"
-          onClick={() => setTab('input')}
+          onClick={() => {
+            setTab('input')
+            if (!editing) setEditing(null)
+          }}
           className={`border-b-2 px-4 py-2 text-sm font-medium ${
             tab === 'input'
               ? 'border-indigo-600 text-indigo-600'
@@ -62,7 +82,12 @@ function App() {
       </nav>
 
       {tab === 'input' && (
-        <ReviewForm onSaved={refresh} />
+        <ReviewForm
+          key={editing?.id ?? 'new'}
+          onSaved={handleSaved}
+          editing={editing}
+          onCancelEdit={handleCancelEdit}
+        />
       )}
 
       {tab === 'history' && (
@@ -93,13 +118,22 @@ function App() {
                       <span className="text-sm font-semibold text-slate-700">
                         {formatDate(review.date)} / {review.type}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(review.id)}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        削除
-                      </button>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(review)}
+                          className="text-sm text-indigo-600 hover:underline"
+                        >
+                          編集
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(review.id)}
+                          className="text-sm text-red-600 hover:underline"
+                        >
+                          削除
+                        </button>
+                      </div>
                     </div>
                     <dl className="space-y-2">
                       {REVIEW_QUESTIONS[review.type].map((q) => (
